@@ -29,6 +29,7 @@ import tintri
 
 """
  This Python script configures QoS on the first 2 live VMs
+ This feature is available in Tintri OS 3.2
 
  Command usage: delete_snapshot <server_name> <userName> <password>
 
