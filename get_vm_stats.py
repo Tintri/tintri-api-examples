@@ -107,7 +107,7 @@ def get_vms(session_id):
     vm_paginated_result = {'live' : "TRUE",
                            'next' : "offset=0&limit=" + str(page_size)}
     
-    # While there are more Vms, go get them
+    # While there are more VMs, go get them
     while 'next' in vm_paginated_result:
         url = get_vm_url + "?" + vm_paginated_result['next']
 
@@ -153,7 +153,8 @@ def get_vms(session_id):
             vm_stats = VmStat(vm_name, vm_uuid, vm["stat"]["sortedStats"][0])
             print_debug(str(count) + ": " + vm_name + ", " + vm_uuid)
             count += 1
-
+			
+			# Store the VM stats object keyed by VM name.
             vms[vm_name] = vm_stats
 
     return vms
