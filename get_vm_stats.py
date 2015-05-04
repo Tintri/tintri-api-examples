@@ -24,13 +24,9 @@
 # THE SOFTWARE.
 
 
-import requests
 import json
 import sys
-import tintri  # On GitHub
-import pprint
-from types import *
-from datetime import datetime
+import tintri  # On Tintri's GitHub site
 from prettytable import PrettyTable
 
 
@@ -204,7 +200,7 @@ for field in stat_fields:
 table = PrettyTable(table_header)
 table.align["VM name"] = "l"
 
-# Build the rows based on the statistic fields
+# Build the table rows based on the statistic fields
 for key, value in sorted(vms.items()):
     print_debug(key + " " + value.get_uuid())
 
@@ -217,4 +213,5 @@ for key, value in sorted(vms.items()):
             row.append(stat)
     table.add_row(row)
 
+# Print the table
 print(table)
