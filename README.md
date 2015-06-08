@@ -11,3 +11,5 @@ tasks at the VM level. Examples include:
 * Configure Tintri replication
 * Restore a Tintri VM snapshot
 * Delete the latest snapshot
+
+The examples use tintri.py or tintri_1_1.py libraries.  Both of these libraries use the Python Requests library. 
