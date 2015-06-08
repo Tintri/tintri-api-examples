@@ -138,7 +138,7 @@ def get_vms(session_id):
             num_filtered_vms = vm_paginated_result["filteredTotal"]
             if num_filtered_vms == 0:
                 print_error("No VMs present")
-                tintri.api_logout(session_id)
+                tintri.api_logout(server_name, session_id)
                 sys_exit(-99)
     
         # Get and store the VM items and save in a VM object.
