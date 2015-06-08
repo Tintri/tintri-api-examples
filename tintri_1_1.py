@@ -92,6 +92,11 @@ def api_get_query(server_name, api, query, session_id):
     except:
         raise TintriRequestsException("An unexpected error " + sys.exc_info()[0] + " occurred.")
 
+    # if HTTP Response is not 200 then raise an exception
+    if r.status_code != 200:
+        message = "The HTTP response for get call to the server is not 200."
+        raise TintriApiException(message, r.status_code, url, "No Payload", r.text)
+
     return r
 
 
@@ -128,19 +133,38 @@ def api_put(server_name, api, payload, session_id):
     try:
         # Invoke the API.
         r = requests.put(url, data=json.dumps(payload),
+                         headers=headers, verify=False)
+    except requests.ConnectionError:
+        raise TintriRequestsException("API Connection error occurred.")
+    except requests.HTTPError:
+        raise TintriRequestsException("HTTP error occurred.")
+    except requests.Timeout:
+        raise TintriRequestsException("Request timed out.")
+    except:
+        raise TintriRequestsException("An unexpected error " + sys.exc_info()[0] + " occurred.")
+
+    return r
+
+
+# POST
+def api_post(server_name, api, payload, session_id):
+    headers = {'content-type': 'application/json',
+               'cookie': 'JSESSIONID='+session_id }
+
+    url = 'https://' + server_name + API + api
+
+    try:
+        # Invoke the API.
+        r = requests.post(url, data=json.dumps(payload),
                           headers=headers, verify=False)
     except requests.ConnectionError:
         raise TintriRequestsException("API Connection error occurred.")
-        sys.exit(-2)
     except requests.HTTPError:
         raise TintriRequestsException("HTTP error occurred.")
-        sys.exit(-3)
     except requests.Timeout:
         raise TintriRequestsException("Request timed out.")
-        sys.exit(-4)
     except:
         raise TintriRequestsException("An unexpected error " + sys.exc_info()[0] + " occurred.")
-        sys.exit(-5)
 
     return r
 
@@ -201,7 +225,7 @@ def api_logout(server_name, session_id):
     # if HTTP Response is not 204 then raise an exception
     if r.status_code != 204:
         message = "The HTTP response for logout call to the server is not 204."
-        raise TintriApiException(message, r.status_code, url_logout, str(payload), r.text)
+        raise TintriApiException(message, r.status_code, url_logout, "No Payload", r.text)
 
     return
 
