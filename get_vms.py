@@ -1,4 +1,4 @@
-#!/usr/bin/env/python
+#!/usr/bin/python
 # -*- coding: utf-8 -*-
 #
 # The MIT License (MIT)
@@ -25,7 +25,7 @@
 
 import json
 import sys
-import tintri
+import tintri_1_1 as tintri
 
 """
  This Python script prints the VM name and UUID for each VM.
@@ -69,49 +69,54 @@ server_name = sys.argv[1]
 user_name = sys.argv[2]
 password = sys.argv[3]
 
-# Could make this an input parameter
 # Get the preferred version
-r = tintri.api_get(server_name, '/info')
-json_info = r.json()
+try:
+    r = tintri.api_get(server_name, '/info')
+    json_info = r.json()
 
-print_info("API Version: " + json_info['preferredVersion'])
+    print_info("API Version: " + json_info['preferredVersion'])
 
-# Login to VMstore
-session_id = tintri.api_login(server_name, user_name, password)
+    # Login to VMstore
+    session_id = tintri.api_login(server_name, user_name, password)
 
-# Get a list of VMs, but only return a page size
-url = "/v310/vm"
-r = tintri.api_get(server_name, url, session_id)
-print_debug("The JSON response of the get invoke to the server " +
-            server_name + " is: " + r.text)
+except tintri.TintriRequestsException as tre:
+    print_error(tre.__str__())
+    exit(-1)
+except tintri.TintriApiException as tae:
+    print_error(tae.__str__())
+    exit(-2)
+    
+try:
+    # Get a list of VMs, but only return a page size
+    url = "/v310/vm"
+    r = tintri.api_get(server_name, url, session_id)
+    print_debug("The JSON response of the get invoke to the server " +
+                server_name + " is: " + r.text)
 
-# if HTTP Response is not 200 then raise an error
-if r.status_code != 200:
-    print_error("The HTTP response for the get invoke to the server " +
-          server_name + " is not 200, but is: " + str(r.status_code))
-    print_error("url = " + url)
-    print_error("response: " + r.text)
+    vm_paginated_result = r.json()
+    num_vms = int(vm_paginated_result["filteredTotal"])
+    if num_vms == 0:
+        raise tintri.TintriRequestsException("No VMs present")
+
+    print_info(str(num_vms) + " VMs present")
+
+    # For each VM, print the VM name and UUID
+    items = vm_paginated_result["items"]
+    count = 1
+    for vm in items:
+        vm_name = vm["vmware"]["name"]
+        vm_uuid = vm["uuid"]["uuid"]
+        print(str(count) + ": " + vm_name + ", " + vm_uuid)
+        count += 1
+
+    # All pau, log out
     tintri.api_logout(server_name, session_id)
-    sys.exit(-10)
 
-vm_paginated_result = r.json()
-num_vms = int(vm_paginated_result["filteredTotal"])
-if num_vms == 0:
-    print_error("No VMs present")
+except tintri.TintriRequestsException as tre:
+    print_error(tre.__str__())
     tintri.api_logout(server_name, session_id)
-    exit(88)
-
-print_info(str(num_vms) + " VMs present")
-
-# For each VM, print the VM name and UUID
-items = vm_paginated_result["items"]
-count = 1
-for vm in items:
-    vm_name = vm["vmware"]["name"]
-    vm_uuid = vm["uuid"]["uuid"]
-    print(str(count) + ": " + vm_name + ", " + vm_uuid)
-    count += 1
-
-# All pau, log out
-tintri.api_logout(server_name, session_id)
-
+    exit(-5)
+except tintri.TintriApiException as tae:
+    print_error(tae.__str__())
+    tintri.api_logout(server_name, session_id)
+    exit(-6)

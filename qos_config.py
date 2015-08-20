@@ -1,4 +1,4 @@
-#!/usr/bin/env/python
+#!/usr/bin/python
 # -*- coding: utf-8 -*-
 #
 # The MIT License (MIT)
@@ -29,9 +29,9 @@ import tintri
 
 """
  This Python script configures QoS on the first 2 live VMs
- This feature is available in Tintri OS 3.2
+ QoS configuration consists of mininum and maximum IOPs.
 
- Command usage: delete_snapshot <server_name> <userName> <password>
+ Command usage: qos_config <server_name> <userName> <password> <min_iops> <max_iops>
 
 """
 
@@ -172,6 +172,7 @@ MS_Request = {'typeId': 'com.tintri.api.rest.v310.dto.MultipleSelectionRequest',
 
 print_info("Changing min and max QOS values to (" + str(new_min_value) + ", " + str(new_max_value) + ")")
 
+# Update the min and max IOPs
 modify_qos_url = "/v310/vm/qosConfig"
 r = tintri.api_put(server_name, modify_qos_url, MS_Request, session_id)
 print_debug("The JSON response of the get invoke to the server " +
@@ -204,6 +205,8 @@ if r.status_code != 200:
     sys.exit(-10)
 
 vm1_info = r.json()
+
+# Set the new values in the VM1 object
 vm1.set_min_value(vm1_info["qosConfig"]["minNormalizedIops"])
 vm1.set_max_value(vm1_info["qosConfig"]["maxNormalizedIops"])
 print_info("VM 1: " + str(vm1))
@@ -224,6 +227,8 @@ if r.status_code != 200:
     sys.exit(-10)
 
 vm2_info = r.json()
+
+# Set the new values in the VM2 object
 vm2.set_min_value(vm2_info["qosConfig"]["minNormalizedIops"])
 vm2.set_max_value(vm2_info["qosConfig"]["maxNormalizedIops"])
 print_info("VM 2: " + str(vm2))
