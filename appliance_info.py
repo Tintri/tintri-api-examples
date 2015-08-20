@@ -29,9 +29,11 @@ import tintri_1_1 as tintri
 from prettytable import PrettyTable
 
 """
- This Python script prints VMstore appliance info.
+ This Python script prints server information.
 
- Command usage: appliance_info <server_name> <userName> <password>
+ Command usage: get_server_info <server_name> <userName> <password>
+
+ Replaces appliance_info.py
 
 """
 
@@ -50,6 +52,11 @@ def print_debug(out):
     return
 
 
+def print_info(out):
+    print_with_prefix("[INFO] : ", out)
+    return
+
+
 def print_error(out):
     print_with_prefix("[ERROR] : ", out)
     return
@@ -57,7 +64,7 @@ def print_error(out):
 
 # main
 if len(sys.argv) < 4:
-    print("\nPrints VM information\n")
+    print("\nPrints server information\n")
     print("Usage: " + sys.argv[0] + " server_name user_name password\n")
     sys.exit(-1)
 
@@ -65,68 +72,54 @@ server_name = sys.argv[1]
 user_name = sys.argv[2]
 password = sys.argv[3]
 
-product_name = None
-json_info = None
-
-# Get the preferred version and product name
+# Get the product name
 try:
     r = tintri.api_get(server_name, '/info')
     json_info = r.json()
     product_name = json_info['productName']
-except tintri.TintriRequestsException as tre:
-    print_error(tre.__str__())
-    exit(-1)
-except tintri.TintriApiException as tae:
-    print_error(tae.__str__())
-    exit(-2)
 
-# Check for correct product
-if product_name != "Tintri VMstore":
-    print_error("Tintri server needs to be Tintri VMstore, not a " + product_name)
-    sys.exit(-8)
+    #print_info("Product: " + product_name)
 
-session_id = None
-
-# Try to login into the VMstore.
-try:
+    # Login to Tintri server
     session_id = tintri.api_login(server_name, user_name, password)
+
 except tintri.TintriRequestsException as tre:
     print_error(tre.__str__())
-    exit(-1)
+    exit(-2)
 except tintri.TintriApiException as tae:
     print_error(tae.__str__())
-    exit(-2)
+    exit(-3)
     
-appliance_info = None
-
-# Get the appliance information
 try:
+    # Get appliance info
     url = "/v310/appliance/default/info"
     r = tintri.api_get(server_name, url, session_id)
     print_debug("The JSON response of the get invoke to the server " +
                 server_name + " is: " + r.text)
 
-    # if HTTP Response is not 200 then raise an error
-    if r.status_code != 200:
-        message = "The HTTP response for get appliance info call to the server is not 200."
-        raise tintri.TintriApiException(message, r.status_code, url, str(Request), r.text)
-
-    appliance_info = r.json()
 except tintri.TintriRequestsException as tre:
     print_error(tre.__str__())
     tintri.api_logout(server_name, session_id)
-    exit(-3)
+    exit(-10)
 except tintri.TintriApiException as tae:
     print_error(tae.__str__())
     tintri.api_logout(server_name, session_id)
-    exit(-4)
-
-# All pau, log out
+    exit(-11)
+    
+# log out
 tintri.api_logout(server_name, session_id)
+
+# Some OS versions do not return all flash.
+all_flash = False
+show_all_flash = False
+
+appliance_info = r.json()
+if 'isAllFlash' in appliance_info:
+    all_flash = appliance_info['isAllFlash']
+    show_all_flash = True
 
 print("")
 
-# Now print the information in table form
 table_header = ('Info', 'Value')
 table = PrettyTable(table_header)
 table.align['Info'] = "l"
@@ -134,6 +127,10 @@ table.align['Value'] = "l"
 
 row = ('Model', appliance_info['modelName'])
 table.add_row(row)
+
+if show_all_flash:
+    row = ('All Flash', all_flash)
+    table.add_row(row)
 
 row = ('OS version', appliance_info['osVersion'])
 table.add_row(row)
