@@ -71,7 +71,7 @@ password = sys.argv[3]
 
 # Get the preferred version
 try:
-    r = tintri.api_get(server_name, '/info')
+    r = tintri.api_version(server_name)
     json_info = r.json()
 
     print_info("API Version: " + json_info['preferredVersion'])
@@ -106,7 +106,8 @@ try:
     for vm in items:
         vm_name = vm["vmware"]["name"]
         vm_uuid = vm["uuid"]["uuid"]
-        print(str(count) + ": " + vm_name + ", " + vm_uuid)
+        vcenter_name = vm["vmware"]["vcenterName"]
+        print(str(count) + ": " + vm_name + ", " + vm_uuid + " - " + vcenter_name)
         count += 1
 
     # All pau, log out

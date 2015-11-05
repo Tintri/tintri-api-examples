@@ -25,7 +25,7 @@
 
 import sys
 import json
-import tintri
+import tintri_1_1 as tintri
 
 """
  This Python script configures QoS on the first 2 live VMs
@@ -103,7 +103,7 @@ new_min_value = sys.argv[4]
 new_max_value = sys.argv[5]
 
 # Get the preferred version
-r = tintri.api_get(server_name, '/info')
+r = tintri.api_version(server_name)
 json_info = r.json()
 
 print_info("API Version: " + json_info['preferredVersion'])

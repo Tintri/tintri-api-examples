@@ -74,11 +74,9 @@ password = sys.argv[3]
 
 # Get the product name
 try:
-    r = tintri.api_get(server_name, '/info')
+    r = tintri.api_version(server_name)
     json_info = r.json()
     product_name = json_info['productName']
-
-    #print_info("Product: " + product_name)
 
     # Login to Tintri server
     session_id = tintri.api_login(server_name, user_name, password)
@@ -124,6 +122,9 @@ table_header = ('Info', 'Value')
 table = PrettyTable(table_header)
 table.align['Info'] = "l"
 table.align['Value'] = "l"
+
+row = ('Product', product_name)
+table.add_row(row)
 
 row = ('Model', appliance_info['modelName'])
 table.add_row(row)

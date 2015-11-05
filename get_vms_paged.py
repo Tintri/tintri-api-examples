@@ -25,7 +25,7 @@
 
 import json
 import sys
-import tintri
+import tintri_1_1 as tintri
 
 """
  This Python script gets all the VMs in paged invocation.
@@ -75,7 +75,7 @@ password = sys.argv[3]
 page_size = 25
 
 # Get the preferred version
-r = tintri.api_get(server_name, '/info')
+r = tintri.api_version(server_name)
 json_info = r.json()
 
 print_info("API Version: " + json_info['preferredVersion'])

@@ -25,7 +25,7 @@
 
 import json
 import sys
-import tintri
+import tintri_1_1 as tintri
 from datetime import datetime
 
 """
@@ -71,7 +71,7 @@ user_name = sys.argv[2]
 password = sys.argv[3]
 
 # Get the preferred version
-r = tintri.api_get(server_name, '/info')
+r = tintri.api_version(server_name)
 json_info = r.json()
 
 print_info("API Version: " + json_info['preferredVersion'])

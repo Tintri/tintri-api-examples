@@ -96,7 +96,7 @@ def process_vmstore(vmstore_name, user_name, password, new_dns_primary):
     server_name = vmstore_name
 
     # Get the server type
-    r = tintri.api_get(server_name, '/info')
+    r = tintri.api_version(server_name)
     json_info = r.json()
     if json_info['productName'] != "Tintri VMstore":
         this_error = "Server needs to be a VMstore"

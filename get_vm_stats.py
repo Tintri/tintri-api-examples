@@ -26,7 +26,7 @@
 
 import json
 import sys
-import tintri  # On Tintri's GitHub site
+import tintri_1_1 as tintri
 from prettytable import PrettyTable
 
 
@@ -167,14 +167,7 @@ user_name = sys.argv[2]
 password = sys.argv[3]
 
 # Get the preferred version
-r = tintri.api_get(server_name, '/info')
-if r.status_code != 200:
-    print_error("The HTTP response for the get invoke to the server " +
-          server_name + " is not 200, but is: " + str(r.status_code))
-    print_error("URL = /api/info")
-    print_error("response: " + r.text)
-    sys.exit(-2)
-
+r = tintri.api_version(server_name)
 json_info = r.json()
 
 print_info("API Version: " + json_info['preferredVersion'])
