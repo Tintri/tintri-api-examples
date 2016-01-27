@@ -23,9 +23,11 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 
-import requests
-import json
 import sys
+import json
+import requests
+#disable security warnings
+requests.packages.urllib3.disable_warnings()
 
 """
  Python functions to assist with Tintri API calls for the explict purpose
@@ -171,8 +173,6 @@ def api_post(server_name, api, payload, session_id):
 
 # Login.
 def api_login(server_name, user_name, password):
-    #disable security warnings
-    requests.packages.urllib3.disable_warnings()
 
     # Payload, header and URL for login call
     headers = {'content-type': 'application/json'}
@@ -234,8 +234,6 @@ def api_logout(server_name, session_id):
 
 # Return API version information
 def api_version(server_name):
-    #disable security warnings
-    requests.packages.urllib3.disable_warnings()
 
     r = api_get(server_name, '/info')
     return r
