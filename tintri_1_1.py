@@ -26,7 +26,9 @@
 import sys
 import json
 import requests
-#disable security warnings
+import urllib3
+
+# disable security warnings
 requests.packages.urllib3.disable_warnings()
 
 """
@@ -86,7 +88,7 @@ def api_get_query(server_name, api, query, session_id):
         # Invoke the API.
         r = requests.get(url, headers=headers, params=query, verify=False)
     except requests.ConnectionError:
-        raise TintriRequestsException("API Connection error occurred.")
+        raise TintriRequestsException("GET: API Connection error occurred.")
     except requests.HTTPError:
         raise TintriRequestsException("HTTP error occurred.")
     except requests.Timeout:
@@ -97,7 +99,10 @@ def api_get_query(server_name, api, query, session_id):
     # if HTTP Response is not 200 then raise an exception
     if r.status_code != 200:
         message = "The HTTP response for get call to the server is not 200."
-        raise TintriApiException(message, r.status_code, url, "No Payload", r.text)
+        if (query is None):
+            raise TintriApiException(message, r.status_code, url, "No Payload", r.text)
+        else:
+            raise TintriApiException(message, r.status_code, url, query, r.text)
 
     return r
 
@@ -237,4 +242,29 @@ def api_version(server_name):
 
     r = api_get(server_name, '/info')
     return r
+
+
+# Download a file
+def download_file(server_name, report_url, session_id, file_name):
+    headers = {'content-type': 'application/json'}
+
+    try:
+        r = requests.get(report_url, headers=headers, verify=False, stream=True)
+        # if HTTP Response is not 200 then raise an exception
+        if r.status_code != 200:
+            message = "The HTTP response for get call to the server is not 200."
+            raise TintriApiException(message, r.status_code, report_url, "No Payload", r.text)
+
+        with open(file_name, 'w') as file_h:
+            for block in r.iter_content(4096):
+                file_h.write(block)
+
+    except requests.ConnectionError:
+        raise TintriRequestsException("API Connection error occurred.")
+    except requests.HTTPError:
+        raise TintriRequestsException("HTTP error occurred.")
+    except requests.Timeout:
+        raise TintriRequestsException("Request timed out.")
+    except Exception as e:
+        raise TintriRequestsException("An unexpected error: " + e.__str__())
 
