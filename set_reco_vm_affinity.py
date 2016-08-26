@@ -29,10 +29,7 @@ import json
 import tintri_1_1 as tintri
 
 """
- This Python script generates a recommendation.
-
- Command usage: 
-
+ This Python script sets VM affinity for VM migration rules.
 
 """
 
@@ -89,39 +86,6 @@ def get_sg_by_name(server_name, session_id, service_group):
 
     return ""
     
-
-# Get a list of VMstore UUIDs by name.
-def get_vmstore_uuids(server_name, session_id, vmstore_names):
-    vmstore_uuids = []
-    vmstore_name_to_uuid = {}
-
-    url = "/v310/vmstore"
-    r = tintri.api_get(server_name, url, session_id)
-    print_debug("The JSON response of the vmstore get invoke to the server " +
-                server_name + " is: " + r.text)
-
-    vmstores = r.json()
-    if len(vmstores) == 0:
-        raise tintri.TintriRequestsException("No VMstores present")
-
-    # Build a dictionary that maps VMstore name to VMstore UUID
-    for vmstore in vmstores:
-        name = vmstore["hostname"]
-        vmstore_name_to_uuid[name] = vmstore["uuid"]["uuid"]
-
-        # Allows short name for input if there are FQN in hostname.
-        name_parts = name.split('.')
-        if (len(name_parts) >= 3):
-            vmstore_name_to_uuid[name_parts[0]] = vmstore["uuid"]["uuid"]
-
-    for vmstore in vmstore_names:
-        if (vmstore in vmstore_name_to_uuid):
-            vmstore_uuids.append(vmstore_name_to_uuid[vmstore])
-        else:
-            print_info("VMstore, " + vmstore + ", is unknown to TGC, " + server_name)
-
-    return vmstore_uuids
-
 
 # Return a list of VM UUIDs from a list of VM names
 def get_vms_in_list(server_name, session_id, vms):
@@ -194,8 +158,6 @@ def get_vms_by_sg(server_name, session_id, sg_uuid):
     vm_uuids = []
 
     # Get a list of VMs, but return a page size at a time
-    get_vm_url = "/v310/vm"
-    vm_paginated_result = {'next' : "offset=0&limit=" + str(page_size)}
     vm_filter = {"includeFields"   : ["uuid", "vmware"],
                  "serviceGroupIds" : sg_uuid
                 }
@@ -245,19 +207,6 @@ def set_vm_affinity_never(server_name, session_id, vm_uuids):
     set_vm_affinity(server_name, session_id, vm_uuids, affinity_rule)
 
 
-# Set the VM affinitry rule to exclude certain VMstores for a list of VMs.
-def set_vm_affinity_exclude(server_name, session_id, vm_uuids, vmstore_uuids):
-    print("Excluding " + str(len(vm_uuids)) + " VMs")
-
-    affinity_rule = \
-        {"typeId" : beans + "vm.VirtualMachineAffinityRule",
-         "ruleType" : "EXCLUDE_DATASTORES",
-         "vmstoreTintriUuids" : vmstore_uuids
-        }
-
-    set_vm_affinity(server_name, session_id, vm_uuids, affinity_rule)
-
-
 # Clear the VM affinity rule for a list of VMs
 def clear_vm_affinity(server_name, session_id, vm_uuids):
     print("Clearing " + str(len(vm_uuids)) + " VMs affinity rules")
@@ -277,22 +226,18 @@ vm_contains_name = ""
 vms = []
 vm_uuids = []
 affinity = "never"
-vmstore_names = []
-vmstore_uuids = []
 
 # Forge the command line argument parser.
-parser = argparse.ArgumentParser(description="Set recommendations VM migration rule")
+parser = argparse.ArgumentParser(description="Set recommendation VM migration rule")
 
 parser.add_argument("server_name", help="TGC server name")
 parser.add_argument("user_name", help="TGC user name")
 parser.add_argument("password", help="User name password")
-parser.add_argument("--sg", help="server group name that constins VMs")
+parser.add_argument("--sg", help="server group name that contains VMs")
 parser.add_argument("--vms", nargs='+', help="a list of VMs")
 parser.add_argument("--name", help="matches VMs that contain name")
-parser.add_argument("--affinity", choices=["never", "exclude", "clear"],
+parser.add_argument("--affinity", choices=["never", "clear"],
                      help="affinity to set. Default is 'never'")
-parser.add_argument("--vmstores", nargs='+',
-                     help="VMstores to exclude. Only valid with 'exclude' affinity")
         
 
 args = parser.parse_args()
@@ -327,17 +272,11 @@ if args.name != None:
 # If nothing to do, then exit.
 if (not to_do):
     print_error("No VMs specified")
-    sys.exit(-1)
+    sys.exit(1)
 
 # Get the rule affinity
 if args.affinity != None:
     affinity = args.affinity
-
-# Get the VMstores
-if args.vmstores != None:
-    vmstore_names = args.vmstores
-    if affinity != "exclude":
-        print_info("VMstore names ignored")
 
 # Collect the required parameters.
 server_name = args.server_name
@@ -366,10 +305,10 @@ try:
 
 except tintri.TintriRequestsException as tre:
     print_error(tre.__str__())
-    exit(-2)
+    sys.exit(2)
 except tintri.TintriApiException as tae:
     print_error(tae.__str__())
-    exit(-3)
+    sys.exit(3)
     
 # Let's get to work.
 try:
@@ -402,12 +341,6 @@ try:
     if (affinity == "never"):
         set_vm_affinity_never(server_name, session_id, vm_uuids)
 
-    elif (affinity == "exclude"):
-        vmstore_uuids = get_vmstore_uuids(server_name, session_id, vmstore_names)
-        if (len(vmstore_uuids) == 0):
-            raise tintri.TintriRequestsException("No matching VMstores")
-        set_vm_affinity_exclude(server_name, session_id, vm_uuids, vmstore_uuids)
-
     elif (affinity == "clear"):
         clear_vm_affinity(server_name, session_id, vm_uuids)
 
@@ -417,10 +350,10 @@ try:
 
 except tintri.TintriRequestsException as tre:
     print_error(tre.__str__())
-    exit(-4)
+    sys.exit(4)
 except tintri.TintriApiException as tae:
     print_error(tae.__str__())
-    exit(-5)
+    sys.exit(5)
 
 # All pau, log out
 tintri.api_logout(server_name, session_id)
